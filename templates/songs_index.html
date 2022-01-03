@@ -1,0 +1,262 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Best 100</title>
+    <link href="{% static 'lib/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
+    <link  href="{% static 'disk/slidercaptcha.min.css' %}" rel="stylesheet" />
+    <style>
+
+      .slidercaptcha {
+          margin: 0 auto;
+          width: 314px;
+          height: 286px;
+          border-radius: 4px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.125);
+          margin-top: 40px;
+      }
+
+          .slidercaptcha .card-body {
+              padding: 1rem;
+          }
+
+          .slidercaptcha canvas:first-child {
+              border-radius: 4px;
+              border: 1px solid #e6e8eb;
+          }
+
+          .slidercaptcha.card .card-header {
+              background-image: none;
+              background-color: rgba(0, 0, 0, 0.03);
+          }
+
+      .refreshIcon {
+          top: -54px;
+      }
+  </style>
+
+
+  </head>
+  <body style="background-color: #333;">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Best 100 of All Time</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarScroll">
+            <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">Music</a>
+              </li>
+              
+            </ul>
+            <div class="d-flex">
+              <input class="form-control me-2" id="search-field" type="search" placeholder="Search" aria-label="Search" style="width: 400px;">
+              <button  id="searchbtn" class="btn btn-outline-success" type="submit">Search</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+    
+    <!-- Modal -->
+    <div class="modal fade" id="myModal"  style="max-width: 100% !important;" tabindex="-1" style="width: 80%;" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Search results for </h5>
+            
+          </div>
+          <div class="modal-body" id="modal-body">
+            
+            
+          </div>
+          <div class="modal-footer" style="display: none;" id="modal-footer">
+            <div class="slidercaptcha card">
+              <div class="card-header">
+                  <span>Are you a human ?</span>
+              </div>
+              <div class="card-body">
+                  <div id="captcha"></div>
+              </div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  
+    <div class="container" style="margin-top: 20px;">
+      <table class="table table-dark table-striped" style="text-align: center; width: 80%;" align="center" >
+        <tr style="border: 2px solid black;">
+
+          <th>Track</th>
+          <th>Artist</th>
+          <th>Album</th>
+          <th>Player</th>
+          <th>Votes</th>
+          </tr>
+          {% for song in songs %}
+          
+          <tr>
+
+            <td>{{song.track}}</td>
+            <td>{{song.artist}}</td>
+            <td>{{song.album}}</td>
+            <td><iframe src="https://open.spotify.com/embed/track/{{song.track_id}}?utm_source=generator" width="80%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe></td>
+            <td>{{song.votes}}</td>
+            
+          </tr>
+          {% endfor %}
+          
+
+          
+          
+         
+      </table>
+      </div>
+      <script src="{% static 'disk/longbow.slidercaptcha.min.js' %} "></script>
+      <script>
+
+        track_id = "";
+        track_global = "";
+        artist_global = "";
+        album_global = "";
+
+          var captcha = sliderCaptcha({
+              id: 'captcha',
+              width: 280,
+              height: 150,
+              sliderL: 42,
+              sliderR: 9,
+              offset: 5,
+              loadingText: 'Loading...',
+              failedText: 'Try again',
+              barText: 'Slide right to fill',
+              repeatIcon: 'fa fa-redo',
+              setSrc: function () {
+                  return 'static/images/Pic1.jpg';
+              },
+              onSuccess: function () { 
+                  console.log("Captcha success");
+                  sendRequest();
+              },
+              onFail: function () {
+                  console.log("Captcha Failed");
+              },
+          });
+     
+   
+        
+      function sendRequest()
+      {
+        $.ajax({
+          url: 'vote',
+          type: 'POST',
+          data: {
+            'id': track_id,
+            'track': track_global,
+            'artist': artist_global,
+            'album': album_global,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+          },
+          success: function(response){
+            console.log(response);
+            location.reload();
+          }
+        });
+      }
+
+      function castVote(id,track,artist,album,row){
+       
+        //console.log(row);
+        table = document.getElementById("search-table");
+        //console.log(table.rows[row]);
+        if(document.getElementById("modal-footer").style.display == "none"){
+          
+          document.getElementById("modal-footer").style.display = "block";
+        }
+       
+        track_id = id;
+        track_global = track;
+        artist_global = artist;
+        album_global = album;
+
+
+
+        return
+
+       
+
+      }
+
+      $(document).ready(function(){
+        $("#searchbtn").click(function(){
+         
+          var search = $("#search-field").val();
+          if (search == "") {
+            return
+          }
+          var data = {
+            search: search,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+   
+            };
+            $.ajax({
+              type: "POST",
+              url: "search",
+              data: data,
+              success: function(response) {
+                console.log(response.data);
+                $("#exampleModalLabel").text("Search results for " + search);
+                console.log(response.data.tracks.items[0].name);
+                var html = '<table class="table table-dark table-bordered " id="search-table"><thead><tr><th scope="col">Img</th><th scope="col">Track</th><th scope="col">Artist</th><th scope="col">Album</th><th scope="col">Vote</th></tr></thead><tbody>';
+                for(var i=0;i<response.data.tracks.items.length;i++){
+                  
+                  img = response.data.tracks.items[i].album.images[0].url;
+                  track =  response.data.tracks.items[i].name;
+                  artist = response.data.tracks.items[i].artists[0].name;
+                  album=  response.data.tracks.items[i].album.name;
+                  id =  response.data.tracks.items[i].id;
+
+                  track = track.replace("'","");
+                  artist = artist.replace("'","");
+                  album = album.replace("'","");
+                  
+                  html += '<tr><td><img src="'+ img +'"  height="30" width="30" /></td><td>' + track + '</td><td>' + artist + '</td><td>' + album + '</td><td><button class="btn btn-primary btn-sm" onclick="castVote(\''+id+'\',\''+track+'\',\''+artist+'\',\''+album+'\','+(parseInt(i)+1)+')">Vote</button></td></tr>';
+                
+                }
+                html += '</tbody></table>';
+                $("#modal-body").html(html);
+                $("#myModal").modal('show');
+                
+              }
+            });
+          
+        });
+      });
+
+
+
+    </script>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    -->
+  </body>
+</html>
